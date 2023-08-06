@@ -36,7 +36,7 @@ class ConvertVideoToGif extends Command
             return;
         }
 
-        $videos = glob($inputDir . '/*.mp4');  // assuming mp4 format, adjust if needed
+        $videos = glob($inputDir . '/*.{mp4,mkv,avi,flv,wmv,mov}', GLOB_BRACE);  // supporting multiple formats
 
         foreach ($videos as $video) {
             $filename = pathinfo($video, PATHINFO_FILENAME);
@@ -56,7 +56,13 @@ class ConvertVideoToGif extends Command
             }
 
             if (!$subtitles) {
-                $videoDuration = shell_exec("ffmpeg -i {$video} 2>&1 | grep 'Duration' | cut -d ' ' -f 4 | sed s/,//");
+                $escapedVideoPath = escapeshellarg($video);
+                $videoDuration = shell_exec("ffmpeg -i {$escapedVideoPath} 2>&1 | grep 'Duration' | cut -d ' ' -f 4 | sed s/,//");
+                $output = shell_exec("ffmpeg -i {$escapedVideoPath} 2>&1");
+                $this->info("ffmpeg output: {$output}");  // Check if ffmpeg outputs details
+                $durationLine = shell_exec("echo '{$output}' | grep 'Duration'");
+                $this->info("Duration line: {$durationLine}");  // Check if grep fetches the duration line
+                $this->info("Fetched Duration: {$videoDuration}");  // Logging duration
                 $durationInSeconds = $this->convertToSeconds($videoDuration);
                 $subtitles = $this->generateDefaultSubtitles($durationInSeconds);
             }
@@ -87,9 +93,12 @@ class ConvertVideoToGif extends Command
                     $cleanSubtitleText = "{$line1}\n{$line2}";
                 }
                 $cleanSubtitleText = escapeshellarg($cleanSubtitleText);
+                $outputGif = "{$targetDir}/{$filename}-{$index}-{$normalizedText}.gif";
+                $outputGifEscaped = escapeshellarg($outputGif);
 
                 // Adjusted ffmpeg command
-                $cmd = "ffmpeg -ss {$start} -to {$end} -i {$videoPath} -vf \"scale=iw*0.25:ih*0.25,drawtext=text={$cleanSubtitleText}:x=(w-text_w)/2:y=h-th-40:fontsize=20:fontcolor=white:borderw=2:bordercolor=black\" -y {$outputDir}/{$filename}/{$filename}-{$index}-{$normalizedText}.gif";
+                $cmd = "ffmpeg -ss {$start} -to {$end} -i {$videoPath} -vf \"scale=iw*0.25:ih*0.25,drawtext=text={$cleanSubtitleText}:x=(w-text_w)/2:y=h-th-40:fontsize=15:fontcolor=white:borderw=2:bordercolor=black\" -y {$outputGifEscaped}";
+                system("ffmpeg -i {$video} 2>&1 | grep 'Duration'");
 
                 shell_exec($cmd);
             }
@@ -99,24 +108,28 @@ class ConvertVideoToGif extends Command
     }
 
     private function getSubtitleFile($videoFilename, $subtitleFiles) {
-        $preferredSubtitles = ['eng', 'en', 'english'];
-        $matchingSubtitles = array_filter($subtitleFiles, function ($subtitle) use ($videoFilename) {
-            return strpos($subtitle, $videoFilename) !== false;
-        });
+        $videoBaseName = pathinfo($videoFilename, PATHINFO_FILENAME);
 
-        if ($matchingSubtitles) {
-            return array_shift($matchingSubtitles);
-        }
+        // Using levenshtein function to get closest matching filename
+        $shortest = -1;
+        $closest = '';
 
-        foreach ($preferredSubtitles as $preferredSubtitle) {
-            foreach ($subtitleFiles as $subtitleFile) {
-                if (strpos($subtitleFile, $preferredSubtitle) !== false) {
-                    return $subtitleFile;
-                }
+        foreach ($subtitleFiles as $subtitleFile) {
+            $subtitleBaseName = pathinfo($subtitleFile, PATHINFO_FILENAME);
+            $lev = levenshtein($videoBaseName, $subtitleBaseName);
+
+            if ($lev == 0) {
+                $closest = $subtitleFile;
+                break;
+            }
+
+            if ($lev <= $shortest || $shortest < 0) {
+                $closest = $subtitleFile;
+                $shortest = $lev;
             }
         }
 
-        return $subtitleFiles[0] ?? null;
+        return $closest;
     }
 
     private function parseSubtitles($subtitleFile) {
@@ -145,7 +158,7 @@ class ConvertVideoToGif extends Command
     }
 
     private function convertToSeconds($time) {
-        if (count(explode(":", $time)) !== 3) {
+        if (!$time || count(explode(":", $time)) !== 3) {
             $this->error("Unexpected time format: " . $time);
             return 0;
         }
