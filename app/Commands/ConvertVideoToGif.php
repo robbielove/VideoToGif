@@ -127,7 +127,7 @@ class ConvertVideoToGif1 extends Command
         $buffer = [];
 
         foreach ($lines as $line) {
-            if (empty($line) && !empty($buffer)) {
+            if (empty($line) && count($buffer) > 1) {
                 if (preg_match("/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/", $buffer[1], $matches)) {
                     $subtitles[] = [
                         'start' => $matches[1],
