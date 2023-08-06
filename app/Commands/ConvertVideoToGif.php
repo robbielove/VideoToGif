@@ -5,7 +5,7 @@ namespace App\Commands;
 use Illuminate\Console\Scheduling\Schedule;
 use LaravelZero\Framework\Commands\Command;
 
-class ConvertVideoToGif1 extends Command
+class ConvertVideoToGif extends Command
 {
     /**
      * The signature of the command.
