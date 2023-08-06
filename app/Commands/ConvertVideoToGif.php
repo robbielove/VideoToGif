@@ -41,6 +41,7 @@ class ConvertVideoToGif extends Command
         foreach ($videos as $video) {
             $filename = pathinfo($video, PATHINFO_FILENAME);
             $subtitleFiles = glob($inputDir . "/*.{srt,ass,ssa}", GLOB_BRACE);
+            $this->info("Found Subtitles: " . implode(', ', $subtitleFiles));
             $subtitleFile = $this->getSubtitleFile($filename, $subtitleFiles);
 
             $targetDir = "{$outputDir}/{$filename}";
@@ -53,6 +54,7 @@ class ConvertVideoToGif extends Command
             $subtitles = [];
             if ($subtitleFile) {
                 $subtitles = $this->parseSubtitles($subtitleFile);
+                $this->info("Parsed Subtitles: " . count($subtitles));
             }
 
             if (!$subtitles) {
@@ -134,13 +136,21 @@ class ConvertVideoToGif extends Command
 
     private function parseSubtitles($subtitleFile) {
         $contents = file_get_contents($subtitleFile);
+        $detectedEncoding = mb_detect_encoding($contents, array('UTF-8', 'UTF-16', 'ISO-8859-1'), true);
+
+        if ($detectedEncoding !== 'UTF-8') {
+            $contents = mb_convert_encoding($contents, 'UTF-8', $detectedEncoding);
+        }
+
         $lines = array_map('trim', explode("\n", $contents));
 
         $subtitles = [];
         $buffer = [];
 
         foreach ($lines as $line) {
-            if (empty($line) && count($buffer) > 1) {
+            $this->info("Reading line: {$line}"); // Log the line
+            if (empty($line) && isset($buffer[1])) {
+                $this->info("Buffer content: " . json_encode($buffer)); // Log the buffer content
                 if (preg_match("/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/", $buffer[1], $matches)) {
                     $subtitles[] = [
                         'start' => $matches[1],
