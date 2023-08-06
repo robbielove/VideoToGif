@@ -66,18 +66,30 @@ class ConvertVideoToGif1 extends Command
                 $end = str_replace(',', '.', $subtitle['end']);
                 $text = $subtitle['text'];
 
-                // Normalize subtitle text for filename - remove non-alphanumeric characters and limit to a reasonable length
-                $normalizedText = preg_replace("/[^A-Za-z0-9]/", '_', substr($text, 0, 20));
+                // Normalize subtitle text for filename
+                $normalizedText = preg_replace("/[^A-Za-z0-9]/", '_', substr($text, 0, 100));
                 $outputGif = "{$targetDir}/{$filename}-{$index}-{$normalizedText}.gif";
 
                 $this->info("Generating GIF for {$start} to {$end}");
-                $videoPath = escapeshellarg($video); // Escape the video path
+                $videoPath = escapeshellarg($video);
 
-                // Clean up subtitle text by stripping HTML tags and other special characters
-                $cleanSubtitleText = escapeshellarg(html_entity_decode(strip_tags($subtitle['text'])));
+                $cleanSubtitleText = html_entity_decode(strip_tags($subtitle['text']));
+// Remove problematic characters
+                $cleanSubtitleText = str_replace([';', '&', '"', '\''], '', $cleanSubtitleText);
+// Also, limit the text length if it's extremely long
+                $cleanSubtitleText = substr($cleanSubtitleText, 0, 100);
 
-                // Adjusted ffmpeg command: added black outline to subtitle text and scaled down the video to 25% of its original size
-                $cmd = "ffmpeg -ss {$start} -to {$end} -i {$videoPath} -vf \"scale=iw*0.25:ih*0.25,drawtext=text={$cleanSubtitleText}:x=(w-text_w)/2:y=h-th-10:fontsize=20:fontcolor=white:borderw=2:bordercolor=black\" -y {$outputDir}/{$filename}/{$filename}-{$index}-{$normalizedText}.gif";
+// If the subtitle is too long, split it into two lines
+                if (strlen($cleanSubtitleText) > 40) {
+                    $splitPosition = strrpos(substr($cleanSubtitleText, 0, 40), ' ');
+                    $line1 = substr($cleanSubtitleText, 0, $splitPosition);
+                    $line2 = substr($cleanSubtitleText, $splitPosition + 1);
+                    $cleanSubtitleText = "{$line1}\n{$line2}";
+                }
+                $cleanSubtitleText = escapeshellarg($cleanSubtitleText);
+
+                // Adjusted ffmpeg command
+                $cmd = "ffmpeg -ss {$start} -to {$end} -i {$videoPath} -vf \"scale=iw*0.25:ih*0.25,drawtext=text={$cleanSubtitleText}:x=(w-text_w)/2:y=h-th-40:fontsize=20:fontcolor=white:borderw=2:bordercolor=black\" -y {$outputDir}/{$filename}/{$filename}-{$index}-{$normalizedText}.gif";
 
                 shell_exec($cmd);
             }
