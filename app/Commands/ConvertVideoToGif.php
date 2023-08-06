@@ -66,14 +66,18 @@ class ConvertVideoToGif1 extends Command
                 $end = str_replace(',', '.', $subtitle['end']);
                 $text = $subtitle['text'];
 
-                $outputGif = "{$targetDir}/{$filename}-{$index}.gif";
+                // Normalize subtitle text for filename - remove non-alphanumeric characters and limit to a reasonable length
+                $normalizedText = preg_replace("/[^A-Za-z0-9]/", '_', substr($text, 0, 20));
+                $outputGif = "{$targetDir}/{$filename}-{$index}-{$normalizedText}.gif";
+
                 $this->info("Generating GIF for {$start} to {$end}");
                 $videoPath = escapeshellarg($video); // Escape the video path
 
                 // Clean up subtitle text by stripping HTML tags and other special characters
                 $cleanSubtitleText = escapeshellarg(html_entity_decode(strip_tags($subtitle['text'])));
 
-                $cmd = "ffmpeg -ss {$start} -to {$end} -i {$videoPath} -vf \"drawtext=text={$cleanSubtitleText}:x=(w-text_w)/2:y=h-th-10:fontsize=24:fontcolor=white\" -y {$outputDir}/{$filename}/{$filename}-{$index}.gif";
+                // Adjusted ffmpeg command: added black outline to subtitle text and scaled down the video to 50% of its original size
+                $cmd = "ffmpeg -ss {$start} -to {$end} -i {$videoPath} -vf \"scale=iw*0.5:ih*0.5,drawtext=text={$cleanSubtitleText}:x=(w-text_w)/2:y=h-th-10:fontsize=30:fontcolor=white:borderw=2:bordercolor=black\" -y {$outputDir}/{$filename}/{$filename}-{$index}-{$normalizedText}.gif";
 
                 shell_exec($cmd);
             }
