@@ -1,40 +1,51 @@
-<a href="https://supportukrainenow.org/"><img src="https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner-direct.svg" width="100%"></a>
+# Video to GIF Converter with Subtitles
 
-------
+This is a Laravel Zero command script that converts videos in a directory into GIFs. If available, subtitles are added to the GIFs.
 
-<p align="center">
-    <img title="Laravel Zero" height="100" src="https://raw.githubusercontent.com/laravel-zero/docs/master/images/logo/laravel-zero-readme.png" />
-</p>
+## Requirements
+- PHP >= 7.3
+- `ffmpeg` installed and available in the PATH
+- Laravel Zero Framework
 
-<p align="center">
-  <a href="https://github.com/laravel-zero/framework/actions"><img src="https://github.com/laravel-zero/laravel-zero/actions/workflows/tests.yml/badge.svg" alt="Build Status"></img></a>
-  <a href="https://packagist.org/packages/laravel-zero/framework"><img src="https://img.shields.io/packagist/dt/laravel-zero/framework.svg" alt="Total Downloads"></a>
-  <a href="https://packagist.org/packages/laravel-zero/framework"><img src="https://img.shields.io/packagist/v/laravel-zero/framework.svg?label=stable" alt="Latest Stable Version"></a>
-  <a href="https://packagist.org/packages/laravel-zero/framework"><img src="https://img.shields.io/packagist/l/laravel-zero/framework.svg" alt="License"></a>
-</p>
+## Installation
 
-<h4> <center>This is a <bold>community project</bold> and not an official Laravel one </center></h4>
+Clone the repository:
+```bash
+git clone <repository-url>
+cd <repository-directory>
+```
 
-Laravel Zero was created by [Nuno Maduro](https://github.com/nunomaduro) and [Owen Voke](https://github.com/owenvoke), and is a micro-framework that provides an elegant starting point for your console application. It is an **unofficial** and customized version of Laravel optimized for building command-line applications.
+Install the dependencies:
+```bash
+composer install
+```
 
-- Built on top of the [Laravel](https://laravel.com) components.
-- Optional installation of Laravel [Eloquent](https://laravel-zero.com/docs/database/), Laravel [Logging](https://laravel-zero.com/docs/logging/) and many others.
-- Supports interactive [menus](https://laravel-zero.com/docs/build-interactive-menus/) and [desktop notifications](https://laravel-zero.com/docs/send-desktop-notifications/) on Linux, Windows & MacOS.
-- Ships with a [Scheduler](https://laravel-zero.com/docs/task-scheduling/) and  a [Standalone Compiler](https://laravel-zero.com/docs/build-a-standalone-application/).
-- Integration with [Collision](https://github.com/nunomaduro/collision) - Beautiful error reporting
+## Usage
 
-------
+You can run the conversion command as:
 
-## Documentation
+```bash
+php artisan app:convert-video-to-gif1 [inputDir] --outputDir=[output_directory_path]
+```
 
-For full documentation, visit [laravel-zero.com](https://laravel-zero.com/).
+- `inputDir`: This is a required argument. Specify the directory where your videos are located.
+- `--outputDir`: This is an optional argument. Specify the directory where you want to save the generated GIFs. By default, GIFs are saved in `./output_gifs` directory.
 
-## Support the development
-**Do you like this project? Support it by donating**
+## Features
 
-- PayPal: [Donate](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=66BYDWAT92N6L)
-- Patreon: [Donate](https://www.patreon.com/nunomaduro)
+- Supports multiple video formats: `mp4, mkv, avi, flv, wmv, mov`.
+- Supports multiple subtitle formats: `srt, ass, ssa`.
+- Automatically matches video files with subtitle files based on their filenames.
+- Generates GIFs with a default duration of 10 seconds if no subtitles are found.
+
+## Troubleshooting
+
+The command provides detailed logs about the conversion process, including parsing subtitles and the progress of GIF creation.
+
+## Contributing
+
+If you would like to contribute to the project or report an issue, please open an issue or submit a pull request.
 
 ## License
 
-Laravel Zero is an open-source software licensed under the MIT license.
+VideoToGif is an open-source software licensed under the MIT license.
